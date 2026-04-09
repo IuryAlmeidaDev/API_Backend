@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.projetoApi.Entity.Audit.Service.AuditService;
 import br.com.projetoApi.Entity.Bloco.Dto.BlocoDTO;
 import br.com.projetoApi.Entity.Bloco.Dto.StatusDTO;
 import br.com.projetoApi.Entity.Bloco.Model.Bloco;
@@ -21,6 +22,9 @@ public class BlocoService {
     @Autowired
     private BlocoRepository blocoRepository;
 
+    @Autowired
+    private AuditService auditService;
+
     @Transactional
     public BlocoDTO criarBloco(BlocoDTO blocoDTO) {
         // Verifica se já existe um bloco com o mesmo nome
@@ -34,6 +38,7 @@ public class BlocoService {
         bloco.setStatus(blocoDTO.getStatus() != null ? blocoDTO.getStatus() : StatusBloco.INATIVO);
         
         bloco = blocoRepository.save(bloco);
+        auditService.register("BLOCO_CREATE", "Bloco criado: " + bloco.getNome());
         return convertToDTO(bloco);
     }
 
@@ -70,6 +75,7 @@ public class BlocoService {
         }
         
         bloco = blocoRepository.save(bloco);
+        auditService.register("BLOCO_UPDATE", "Bloco atualizado: " + bloco.getNome());
         return convertToDTO(bloco);
     }
 
@@ -79,6 +85,7 @@ public class BlocoService {
             throw new EntityNotFoundException("Bloco não encontrado com ID: " + id);
         }
         blocoRepository.deleteById(id);
+        auditService.register("BLOCO_DELETE", "Bloco removido: " + id);
     }
 
     @Transactional
@@ -88,6 +95,7 @@ public class BlocoService {
         
         bloco.setStatus(statusDTO.getStatus());
         bloco = blocoRepository.save(bloco);
+        auditService.register("BLOCO_STATUS_UPDATE", "Status alterado do bloco " + bloco.getId() + " para " + bloco.getStatus());
         return convertToDTO(bloco);
     }
 

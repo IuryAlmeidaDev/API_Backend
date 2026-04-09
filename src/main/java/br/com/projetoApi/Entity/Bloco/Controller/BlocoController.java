@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import br.com.projetoApi.Entity.Bloco.Dto.BlocoDTO;
 import br.com.projetoApi.Entity.Bloco.Dto.StatusDTO;
@@ -32,6 +33,7 @@ public class BlocoController {
     @Operation(summary = "Listar todos os blocos", description = "Retorna uma lista de todos os blocos cadastrados ordenados por nome")
     @ApiResponse(responseCode = "200", description = "Lista de blocos retornada com sucesso")
     @GetMapping
+    @PreAuthorize("hasAuthority('BLOCO_READ')")
     public ResponseEntity<List<BlocoDTO>> listarBlocos() {
         List<BlocoDTO> blocos = blocoService.listarBlocos();
         return ResponseEntity.ok(blocos);
@@ -43,6 +45,7 @@ public class BlocoController {
         @ApiResponse(responseCode = "404", description = "Bloco não encontrado")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('BLOCO_READ')")
     public ResponseEntity<?> obterBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long id) {
@@ -62,6 +65,7 @@ public class BlocoController {
         @ApiResponse(responseCode = "400", description = "Dados inválidos ou bloco já existente")
     })
     @PostMapping
+    @PreAuthorize("hasAuthority('BLOCO_WRITE')")
     public ResponseEntity<?> criarBloco(@Valid @RequestBody BlocoDTO blocoDTO) {
         try {
             BlocoDTO novoBloco = blocoService.criarBloco(blocoDTO);
@@ -80,6 +84,7 @@ public class BlocoController {
         @ApiResponse(responseCode = "400", description = "Dados inválidos")
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('BLOCO_WRITE')")
     public ResponseEntity<?> editarBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long id, 
@@ -104,6 +109,7 @@ public class BlocoController {
         @ApiResponse(responseCode = "404", description = "Bloco não encontrado")
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('BLOCO_WRITE')")
     public ResponseEntity<?> deletarBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long id) {
@@ -125,6 +131,7 @@ public class BlocoController {
         @ApiResponse(responseCode = "404", description = "Bloco não encontrado")
     })
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('BLOCO_WRITE')")
     public ResponseEntity<?> alterarStatusBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long id, 
@@ -141,6 +148,7 @@ public class BlocoController {
 
     @Operation(summary = "Listar blocos por status", description = "Retorna uma lista de blocos filtrados por status")
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasAuthority('BLOCO_READ')")
     public ResponseEntity<List<BlocoDTO>> listarBlocosPorStatus(
             @Parameter(description = "Status do bloco", required = true)
             @PathVariable StatusBloco status) {
@@ -150,6 +158,7 @@ public class BlocoController {
 
     @Operation(summary = "Listar blocos ativos", description = "Retorna uma lista de blocos com status ATIVO")
     @GetMapping("/ativos")
+    @PreAuthorize("hasAuthority('BLOCO_READ')")
     public ResponseEntity<List<BlocoDTO>> listarBlocosAtivos() {
         List<BlocoDTO> blocos = blocoService.listarBlocosAtivos();
         return ResponseEntity.ok(blocos);

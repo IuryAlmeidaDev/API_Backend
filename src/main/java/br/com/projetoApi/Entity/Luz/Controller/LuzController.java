@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import br.com.projetoApi.Entity.Luz.Dto.LuzDTO;
 import br.com.projetoApi.Entity.Luz.Service.LuzService;
@@ -29,6 +30,7 @@ public class LuzController {
 
     @Operation(summary = "Ligar todas as luzes do bloco", description = "Liga todas as luzes de um bloco específico")
     @PatchMapping("/bloco/{blocoId}/ligar-todas")
+    @PreAuthorize("hasAuthority('LUZ_WRITE')")
     public ResponseEntity<List<LuzDTO>> ligarTodasLuzesDoBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long blocoId) {
@@ -38,6 +40,7 @@ public class LuzController {
 
     @Operation(summary = "Desligar todas as luzes do bloco", description = "Desliga todas as luzes de um bloco específico")
     @PatchMapping("/bloco/{blocoId}/desligar-todas")
+    @PreAuthorize("hasAuthority('LUZ_WRITE')")
     public ResponseEntity<List<LuzDTO>> desligarTodasLuzesDoBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long blocoId) {
@@ -47,6 +50,7 @@ public class LuzController {
 
     @Operation(summary = "Ligar luz", description = "Liga uma luz específica")
     @PatchMapping("/{id}/ligar")
+    @PreAuthorize("hasAuthority('LUZ_WRITE')")
     public ResponseEntity<?> ligarLuz(
             @Parameter(description = "ID da luz", required = true)
             @PathVariable Long id) {
@@ -62,6 +66,7 @@ public class LuzController {
 
     @Operation(summary = "Desligar luz", description = "Desliga uma luz específica")
     @PatchMapping("/{id}/desligar")
+    @PreAuthorize("hasAuthority('LUZ_WRITE')")
     public ResponseEntity<?> desligarLuz(
             @Parameter(description = "ID da luz", required = true)
             @PathVariable Long id) {
@@ -82,6 +87,7 @@ public class LuzController {
         @ApiResponse(responseCode = "404", description = "Sala não encontrada")
     })
     @PostMapping
+    @PreAuthorize("hasAuthority('LUZ_WRITE')")
     public ResponseEntity<?> criarLuz(@Valid @RequestBody LuzDTO luzDTO) {
         try {
             LuzDTO novaLuz = luzService.criarLuz(luzDTO);
@@ -104,6 +110,7 @@ public class LuzController {
         @ApiResponse(responseCode = "400", description = "Dados inválidos")
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('LUZ_WRITE')")
     public ResponseEntity<?> editarLuz(
             @Parameter(description = "ID da luz", required = true)
             @PathVariable Long id, 
@@ -128,6 +135,7 @@ public class LuzController {
         @ApiResponse(responseCode = "404", description = "Luz não encontrada")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('LUZ_READ')")
     public ResponseEntity<?> obterLuz(
             @Parameter(description = "ID da luz", required = true)
             @PathVariable Long id) {
@@ -147,6 +155,7 @@ public class LuzController {
         @ApiResponse(responseCode = "404", description = "Luz não encontrada")
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('LUZ_WRITE')")
     public ResponseEntity<?> deletarLuz(
             @Parameter(description = "ID da luz", required = true)
             @PathVariable Long id) {

@@ -1,55 +1,39 @@
-# Definição dos serviços que compõem a aplicação
 services:
-  # Serviço da aplicação Spring Boot
   app:
-    # Configuração para construir a imagem do contêiner a partir de um Dockerfile
     build:
-      context: .  # Usa o diretório atual como contexto de construção
-      dockerfile: Dockerfile  # Especifica o arquivo Dockerfile a ser usado
-    # Mapeamento de portas: porta 8080 do host para porta 8080 do contêiner
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    # Variáveis de ambiente para configurar a conexão com o banco de dados
     environment:
-      # URL do banco de dados PostgreSQL, apontando para o serviço 'db'
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/projetoapi
-      # Nome de usuário do banco de dados
-      SPRING_DATASOURCE_USERNAME: admin
-      # Senha do banco de dados
-      SPRING_DATASOURCE_PASSWORD: admin123
-    # Define dependência do serviço 'db' com condição de saúde
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      BOOTSTRAP_ADMIN_CPF: ${BOOTSTRAP_ADMIN_CPF:-}
+      BOOTSTRAP_ADMIN_NOME: ${BOOTSTRAP_ADMIN_NOME:-Administrador}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
     depends_on:
       db:
-        condition: service_healthy  # A aplicação só inicia após o banco estar saudável
-    # Política de reinício para garantir que o contêiner reinicie automaticamente
-    # em caso de falhas, exceto se parado manualmente
+        condition: service_healthy
     restart: "no"
 
-  # Serviço do banco de dados PostgreSQL
   db:
-    # Usa a imagem oficial do PostgreSQL, versão 16, baseada no Alpine para leveza
     image: postgres:16-alpine
-    # Variáveis de ambiente para configurar o banco de dados
     environment:
-      POSTGRES_DB: projetoapi  # Nome do banco de dados a ser criado
-      POSTGRES_USER: admin  # Usuário do banco de dados
-      POSTGRES_PASSWORD: admin123  # Senha do banco de dados
-    # Mapeamento de portas: porta 5432 do host para porta 5432 do contêiner
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
-    # Volume para persistir os dados do PostgreSQL entre reinicializações
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # Configuração de verificação de saúde do banco de dados
     healthcheck:
-      # Comando para verificar se o PostgreSQL está pronto para aceitar conexões
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s       # Intervalo entre verificações de saúde (5 segundos)
-      timeout: 5s        # Tempo limite para o comando de teste
-      retries: 10        # Número de tentativas antes de considerar o serviço não saudável
-      start_period: 10s  # Período inicial para o serviço iniciar antes de verificar saúde
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
-# Definição de volumes nomeados para persistência de dados
 volumes:
-  pgdata:  # Volume nomeado para armazenar os dados do PostgreSQL
-  
+  pgdata:

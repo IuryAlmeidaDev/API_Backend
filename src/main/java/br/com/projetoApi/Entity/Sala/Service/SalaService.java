@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.projetoApi.Entity.Audit.Service.AuditService;
 import br.com.projetoApi.Entity.Bloco.Model.Bloco;
 import br.com.projetoApi.Entity.Bloco.Repository.BlocoRepository;
 import br.com.projetoApi.Entity.Sala.Dto.SalaDTO;
@@ -27,6 +28,9 @@ public class SalaService {
     @Autowired
     private BlocoRepository blocoRepository;
 
+    @Autowired
+    private AuditService auditService;
+
     @Transactional
     public SalaDTO criarSala(SalaDTO salaDTO) {
         // Verifica se já existe uma sala com o mesmo nome
@@ -46,6 +50,7 @@ public class SalaService {
         sala.setBloco(bloco);
         
         sala = salaRepository.save(sala);
+        auditService.register("SALA_CREATE", "Sala criada: " + sala.getNome());
         return convertToDTO(sala);
     }
 
@@ -89,6 +94,7 @@ public class SalaService {
         }
         
         sala = salaRepository.save(sala);
+        auditService.register("SALA_UPDATE", "Sala atualizada: " + sala.getNome());
         return convertToDTO(sala);
     }
 
@@ -98,6 +104,7 @@ public class SalaService {
             throw new EntityNotFoundException("Sala não encontrada com ID: " + id);
         }
         salaRepository.deleteById(id);
+        auditService.register("SALA_DELETE", "Sala removida: " + id);
     }
 
     @Transactional
@@ -107,6 +114,7 @@ public class SalaService {
         
         sala.setStatus(statusDTO.getStatus());
         sala = salaRepository.save(sala);
+        auditService.register("SALA_STATUS_UPDATE", "Status alterado da sala " + sala.getId() + " para " + sala.getStatus());
         return convertToDTO(sala);
     }
 

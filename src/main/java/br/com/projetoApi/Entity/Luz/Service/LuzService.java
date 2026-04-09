@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.projetoApi.Entity.Audit.Service.AuditService;
 import br.com.projetoApi.Entity.Luz.Dto.LuzDTO;
 import br.com.projetoApi.Entity.Luz.Dto.LuzStatusDTO;
 import br.com.projetoApi.Entity.Luz.Model.Luz;
@@ -26,6 +27,9 @@ public class LuzService {
     @Autowired
     private SalaRepository salaRepository;
 
+    @Autowired
+    private AuditService auditService;
+
     @Transactional
     public LuzDTO criarLuz(LuzDTO luzDTO) {
         // Verifica se a sala existe
@@ -42,6 +46,7 @@ public class LuzService {
         luz.setStatus(luzDTO.getStatus() != null ? luzDTO.getStatus() : StatusLuz.DESLIGADO);
         
         luz = luzRepository.save(luz);
+        auditService.register("LUZ_CREATE", "Luz criada para sala " + sala.getNome());
         return convertToDTO(luz);
     }
 
@@ -83,6 +88,7 @@ public class LuzService {
         }
         
         luz = luzRepository.save(luz);
+        auditService.register("LUZ_UPDATE", "Luz atualizada: " + luz.getId());
         return convertToDTO(luz);
     }
 
@@ -92,6 +98,7 @@ public class LuzService {
             throw new EntityNotFoundException("Luz não encontrada com ID: " + id);
         }
         luzRepository.deleteById(id);
+        auditService.register("LUZ_DELETE", "Luz removida: " + id);
     }
 
     @Transactional
@@ -101,6 +108,7 @@ public class LuzService {
         
         luz.setStatus(statusDTO.getStatus());
         luz = luzRepository.save(luz);
+        auditService.register("LUZ_STATUS_UPDATE", "Status alterado da luz " + luz.getId() + " para " + luz.getStatus());
         return convertToDTO(luz);
     }
 
@@ -111,6 +119,7 @@ public class LuzService {
         
         luz.setStatus(StatusLuz.LIGADO);
         luz = luzRepository.save(luz);
+        auditService.register("LUZ_TURN_ON", "Luz ligada: " + luz.getId());
         return convertToDTO(luz);
     }
 
@@ -121,6 +130,7 @@ public class LuzService {
         
         luz.setStatus(StatusLuz.DESLIGADO);
         luz = luzRepository.save(luz);
+        auditService.register("LUZ_TURN_OFF", "Luz desligada: " + luz.getId());
         return convertToDTO(luz);
     }
 
@@ -132,6 +142,7 @@ public class LuzService {
         StatusLuz novoStatus = luz.getStatus() == StatusLuz.LIGADO ? StatusLuz.DESLIGADO : StatusLuz.LIGADO;
         luz.setStatus(novoStatus);
         luz = luzRepository.save(luz);
+        auditService.register("LUZ_TOGGLE", "Luz alternada: " + luz.getId() + " para " + novoStatus);
         return convertToDTO(luz);
     }
 
@@ -190,6 +201,7 @@ public class LuzService {
         List<Luz> luzes = luzRepository.findByBlocoId(blocoId);
         luzes.forEach(luz -> luz.setStatus(StatusLuz.LIGADO));
         luzRepository.saveAll(luzes);
+        auditService.register("LUZ_BLOCO_TURN_ON", "Todas as luzes do bloco foram ligadas: " + blocoId);
         
         return luzes.stream()
                 .map(this::convertToDTO)
@@ -201,6 +213,7 @@ public class LuzService {
         List<Luz> luzes = luzRepository.findByBlocoId(blocoId);
         luzes.forEach(luz -> luz.setStatus(StatusLuz.DESLIGADO));
         luzRepository.saveAll(luzes);
+        auditService.register("LUZ_BLOCO_TURN_OFF", "Todas as luzes do bloco foram desligadas: " + blocoId);
         
         return luzes.stream()
                 .map(this::convertToDTO)
@@ -216,6 +229,7 @@ public class LuzService {
         List<Luz> luzes = luzRepository.findBySalaId(salaId);
         luzes.forEach(luz -> luz.setStatus(StatusLuz.LIGADO));
         luzRepository.saveAll(luzes);
+        auditService.register("LUZ_SALA_TURN_ON", "Todas as luzes da sala foram ligadas: " + salaId);
         
         return luzes.stream()
                 .map(this::convertToDTO)
@@ -231,6 +245,7 @@ public class LuzService {
         List<Luz> luzes = luzRepository.findBySalaId(salaId);
         luzes.forEach(luz -> luz.setStatus(StatusLuz.DESLIGADO));
         luzRepository.saveAll(luzes);
+        auditService.register("LUZ_SALA_TURN_OFF", "Todas as luzes da sala foram desligadas: " + salaId);
         
         return luzes.stream()
                 .map(this::convertToDTO)

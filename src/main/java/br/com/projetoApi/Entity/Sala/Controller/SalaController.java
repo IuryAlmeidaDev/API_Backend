@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import br.com.projetoApi.Entity.Sala.Dto.SalaDTO;
 import br.com.projetoApi.Entity.Sala.Dto.SalaStatusDTO;
@@ -33,6 +34,7 @@ public class SalaController {
     @Operation(summary = "Listar todas as salas", description = "Retorna uma lista de todas as salas cadastradas ordenadas por nome")
     @ApiResponse(responseCode = "200", description = "Lista de salas retornada com sucesso")
     @GetMapping
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> listarSalas() {
         List<SalaDTO> salas = salaService.listarSalas();
         return ResponseEntity.ok(salas);
@@ -44,6 +46,7 @@ public class SalaController {
         @ApiResponse(responseCode = "404", description = "Sala não encontrada")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<?> obterSala(
             @Parameter(description = "ID da sala", required = true)
             @PathVariable Long id) {
@@ -64,6 +67,7 @@ public class SalaController {
         @ApiResponse(responseCode = "404", description = "Bloco não encontrado")
     })
     @PostMapping
+    @PreAuthorize("hasAuthority('SALA_WRITE')")
     public ResponseEntity<?> criarSala(@Valid @RequestBody SalaDTO salaDTO) {
         try {
             SalaDTO novaSala = salaService.criarSala(salaDTO);
@@ -86,6 +90,7 @@ public class SalaController {
         @ApiResponse(responseCode = "400", description = "Dados inválidos")
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('SALA_WRITE')")
     public ResponseEntity<?> editarSala(
             @Parameter(description = "ID da sala", required = true)
             @PathVariable Long id, 
@@ -110,6 +115,7 @@ public class SalaController {
         @ApiResponse(responseCode = "404", description = "Sala não encontrada")
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('SALA_WRITE')")
     public ResponseEntity<?> deletarSala(
             @Parameter(description = "ID da sala", required = true)
             @PathVariable Long id) {
@@ -131,6 +137,7 @@ public class SalaController {
         @ApiResponse(responseCode = "404", description = "Sala não encontrada")
     })
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('SALA_WRITE')")
     public ResponseEntity<?> alterarStatusSala(
             @Parameter(description = "ID da sala", required = true)
             @PathVariable Long id, 
@@ -147,6 +154,7 @@ public class SalaController {
 
     @Operation(summary = "Listar salas por status", description = "Retorna uma lista de salas filtradas por status")
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> listarSalasPorStatus(
             @Parameter(description = "Status da sala", required = true)
             @PathVariable StatusSala status) {
@@ -156,6 +164,7 @@ public class SalaController {
 
     @Operation(summary = "Listar salas por tipo", description = "Retorna uma lista de salas filtradas por tipo")
     @GetMapping("/tipo/{tipo}")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> listarSalasPorTipo(
             @Parameter(description = "Tipo da sala", required = true)
             @PathVariable TipoSala tipo) {
@@ -165,6 +174,7 @@ public class SalaController {
 
     @Operation(summary = "Listar salas por bloco", description = "Retorna uma lista de salas de um bloco específico")
     @GetMapping("/bloco/{blocoId}")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> listarSalasPorBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long blocoId) {
@@ -174,6 +184,7 @@ public class SalaController {
 
     @Operation(summary = "Listar salas livres", description = "Retorna uma lista de salas com status LIVRE")
     @GetMapping("/livres")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> listarSalasLivres() {
         List<SalaDTO> salas = salaService.listarSalasLivres();
         return ResponseEntity.ok(salas);
@@ -181,6 +192,7 @@ public class SalaController {
 
     @Operation(summary = "Listar salas por capacidade mínima", description = "Retorna salas com capacidade maior ou igual ao valor especificado")
     @GetMapping("/capacidade/{capacidade}")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> listarSalasPorCapacidade(
             @Parameter(description = "Capacidade mínima", required = true)
             @PathVariable Integer capacidade) {
@@ -190,6 +202,7 @@ public class SalaController {
 
     @Operation(summary = "Listar salas livres com capacidade mínima", description = "Retorna salas livres com capacidade maior ou igual ao valor especificado")
     @GetMapping("/livres/capacidade/{capacidade}")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> listarSalasLivresComCapacidade(
             @Parameter(description = "Capacidade mínima", required = true)
             @PathVariable Integer capacidade) {
@@ -199,6 +212,7 @@ public class SalaController {
 
     @Operation(summary = "Buscar salas com filtros", description = "Retorna salas filtradas por múltiplos critérios")
     @GetMapping("/filtros")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> buscarSalasComFiltros(
             @Parameter(description = "ID do bloco (opcional)")
             @RequestParam(required = false) Long blocoId,
@@ -215,6 +229,7 @@ public class SalaController {
 
     @Operation(summary = "Contar salas livres por bloco", description = "Retorna o número de salas livres em um bloco específico")
     @GetMapping("/bloco/{blocoId}/livres/contar")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<Map<String, Long>> contarSalasLivresPorBloco(
             @Parameter(description = "ID do bloco", required = true)
             @PathVariable Long blocoId) {
@@ -226,6 +241,7 @@ public class SalaController {
 
     @Operation(summary = "Buscar salas por nome", description = "Retorna salas que contenham o nome especificado")
     @GetMapping("/buscar")
+    @PreAuthorize("hasAuthority('SALA_READ')")
     public ResponseEntity<List<SalaDTO>> buscarSalasPorNome(
             @Parameter(description = "Nome da sala para busca", required = true)
             @RequestParam String nome) {

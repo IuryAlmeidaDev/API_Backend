@@ -1,14 +1,16 @@
 package br.com.projetoApi.Config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -16,13 +18,27 @@ import br.com.projetoApi.Entity.User.Service.AppUserService;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private final JwtRequestFilter jwtRequestFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
+    private final AppUserService appUserService;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    public SecurityConfig(
+            JwtRequestFilter jwtRequestFilter,
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            RestAccessDeniedHandler restAccessDeniedHandler,
+            AppUserService appUserService,
+            PasswordEncoder passwordEncoder) {
+        this.jwtRequestFilter = jwtRequestFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.restAccessDeniedHandler = restAccessDeniedHandler;
+        this.appUserService = appUserService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -30,55 +46,30 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AppUserService userService) throws Exception {
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(appUserService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .userDetailsService(userService)
+            .csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
-                // Rotas públicas
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                
-                // Rotas autenticadas
-                .requestMatchers("/api/auth/profile", "/api/auth/logout").authenticated()
-                
-                // Rotas de administração (apenas ADMIN)
-                .requestMatchers("/api/admin/**", "/api/logs/**", "/api/usuarios/gerenciar/**", 
-                "/api/sistema/configuracoes/**", "/api/contingencia/**").hasRole("ADMIN")
-                
-                // Rotas de blocos (acesso compartilhado)
-                .requestMatchers("/api/blocos", "/api/blocos/{id}", "/api/blocos/ativos", "/api/blocos/status/**")
-                .hasAnyRole("ADMIN", "PROFESSOR", "ALUNO")
-                .requestMatchers(HttpMethod.POST, "/api/blocos").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/blocos/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/blocos/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/blocos/**").hasRole("ADMIN")
-                
-                // Rotas de salas (acesso compartilhado)
-                .requestMatchers(HttpMethod.GET, "/api/salas", "/api/salas/{id}", "/api/salas/livres", "/api/salas/bloco/**")
-                .hasAnyRole("ADMIN", "PROFESSOR", "ALUNO")
-                .requestMatchers(HttpMethod.POST, "/api/salas").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/salas/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/salas/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/salas/*/status").hasAnyRole("ADMIN", "PROFESSOR")
-
-                // Rotas de luzes (acesso livre)
-                .requestMatchers(HttpMethod.GET, "/api/luzes/**").permitAll()
-                 // Rotas de luzes (acesso livre)
-                .requestMatchers(HttpMethod.POST, "/api/luzes/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/luzes/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/luzes/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/luzes/**").hasAnyRole("ADMIN")
-                
-
-                
-                // Todas as demais requisições requerem autenticação
+                .requestMatchers("/api/auth/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
             )
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .headers(headers -> headers.disable())
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(restAccessDeniedHandler)
+            )
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
